@@ -1,9 +1,10 @@
 import asyncio
 import time
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message, ChatPermissions
 from dotenv import load_dotenv
+from langdetect import detect, DetectorFactory
 import os
 import logging
 
@@ -17,6 +18,25 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 user_cache = {}
+
+
+@dp.message()
+async def handle_message(message: types.Message):
+    if message.text:
+        lang = await detect_language(message.text)
+        if lang == "ru":
+            await message.reply("/mute 30")
+        await message.answer(lang)
+
+
+async def detect_language(text: str) -> str:
+    loop = asyncio.get_event_loop()
+    try:
+        language = await loop.run_in_executor(None, detect, text)
+        return language
+    except:
+        return "unknown"
+
 
 @dp.message(lambda message: message.text and not message.text.startswith('/'))
 async def cache_users(message: Message):
